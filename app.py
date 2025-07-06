@@ -3,6 +3,7 @@ from flask import Flask, request
 import requests
 import os
 import subprocess
+import json
 
 app = Flask(__name__)
 
@@ -68,6 +69,28 @@ def send_notion_request(video_id):
     print(f"Notion API 응답 코드: {response.status_code}")
     print(f"응답 내용: {response.text}")
 
+def request_gemini_summary(transcript_path):
+    with open(transcript_path, 'r', encoding='utf-8') as f:
+        transcript = f.read()
+    api_url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=AIzaSyB6R2m7pr9jATCoY7-BoY67aOkmqZVGE5U"
+    headers = {"Content-Type": "application/json"}
+    prompt = f"다음은 유튜브 영상의 자막이야. 3줄요약과 서론,본론,결말 을 작성해. 마지막에는 핵심내용을 서술해.:\n{transcript}"
+    data = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt
+                    }
+                ]
+            }
+        ]
+    }
+    response = requests.post(api_url, headers=headers, data=json.dumps(data))
+    print("Gemini 응답 코드:", response.status_code)
+    print("Gemini 응답 내용:", response.text)
+    return response.text
+
 @app.route('/')
 def home():
     return '서버 잘 돌아가고 있다!'
@@ -112,6 +135,10 @@ def video():
             print("transcript.txt 생성 완료!")
         except subprocess.CalledProcessError as e:
             print("transcript.txt 생성 중 오류 발생:", e)
+        # 4. Gemini API 요청
+        if os.path.exists(transcript_path):
+            gemini_response = request_gemini_summary(transcript_path)
+            # 필요하면 gemini_response를 파일로 저장하거나, Notion에 추가 등 추가 가능
     else:
         print(f"{vtt_path} 파일이 존재하지 않아 transcript.txt를 생성하지 못함.")
 
