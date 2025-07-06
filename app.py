@@ -1,7 +1,22 @@
+import re
 from flask import Flask, request
 import requests
 
 app = Flask(__name__)
+
+def extract_youtube_id(url):
+    # 여러 유튜브 URL 포맷에서 ID 추출
+    patterns = [
+        r"youtu\.be/([\w-]+)",
+        r"youtube\.com/watch\?v=([\w-]+)",
+        r"youtube\.com/embed/([\w-]+)",
+        r"youtube\.com/v/([\w-]+)"
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
 
 def send_notion_request(video_id):
     url = "https://api.notion.com/v1/pages"
@@ -57,10 +72,12 @@ def home():
 
 @app.route('/video', methods=['POST'])
 def video():
-    video_id = request.get_data(as_text=True)
-    print(f"받은 영상ID: {video_id}")
+    video_url = request.get_data(as_text=True)
+    print(f"받은 영상URL: {video_url}")
+    video_id = extract_youtube_id(video_url)
+    print(f"추출된 영상ID: {video_id}")
     send_notion_request(video_id)
-    return f"서버가 받은 영상ID: {video_id}", 200
+    return f"유튜브영상 ID: {video_id}", 200
 
 if __name__ == '__main__':
     print('서버 ON🔆')
