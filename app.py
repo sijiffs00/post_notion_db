@@ -1,11 +1,9 @@
-from flask import Flask
-import threading
-import time
+from flask import Flask, request
 import requests
 
 app = Flask(__name__)
 
-def send_notion_request():
+def send_notion_request(video_id):
     url = "https://api.notion.com/v1/pages"
     headers = {
         "Authorization": "Bearer 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",
@@ -28,7 +26,7 @@ def send_notion_request():
                 "rich_text": [
                     {
                         "text": {
-                            "content": "https://youtu.be/example123"
+                            "content": video_id
                         }
                     }
                 ]
@@ -49,19 +47,21 @@ def send_notion_request():
             }
         }
     }
-    while True:
-        response = requests.post(url, headers=headers, json=data)
-        print(f"Notion API 응답 코드: {response.status_code}")
-        print(f"응답 내용: {response.text}")
-        time.sleep(5)
+    response = requests.post(url, headers=headers, json=data)
+    print(f"Notion API 응답 코드: {response.status_code}")
+    print(f"응답 내용: {response.text}")
 
 @app.route('/')
 def home():
     return '서버 잘 돌아가고 있다!'
 
+@app.route('/video', methods=['POST'])
+def video():
+    video_id = request.get_data(as_text=True)
+    print(f"받은 영상ID: {video_id}")
+    send_notion_request(video_id)
+    return f"서버가 받은 영상ID: {video_id}", 200
+
 if __name__ == '__main__':
     print('서버 ON🔆')
-    # 백그라운드에서 5초마다 Notion API 요청 보내는 스레드 시작
-    t = threading.Thread(target=send_notion_request, daemon=True)
-    t.start()
     app.run(host='0.0.0.0', port=5001)
