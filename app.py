@@ -86,9 +86,11 @@ def video():
 
     # 2. yt-dlp 명령어 실행 (yt 폴더 경로를 명시적으로 지정)
     youtube_url = f"https://youtu.be/{video_id}"
+    vtt_path = os.path.join('yt', 'download_script.ko.vtt')
+    transcript_path = os.path.join('yt', 'transcript.txt')
     cmd = [
         "yt-dlp",
-        "-o", "yt/download_script.%(ext)s",
+        "-o", vtt_path.replace('.ko.vtt', '.%(ext)s'),
         "--write-auto-sub",
         "--sub-lang", "ko",
         "--skip-download",
@@ -99,6 +101,19 @@ def video():
         print("자막 다운로드 완료!")
     except subprocess.CalledProcessError as e:
         print("yt-dlp 실행 중 오류 발생:", e)
+
+    # 3. iconv/sed/awk 명령어로 transcript.txt 생성
+    if os.path.exists(vtt_path):
+        filter_cmd = f"iconv -f utf-8 -t utf-8 '{vtt_path}' | " \
+                     f"LC_CTYPE=UTF-8 sed -e '/^[0-9]/d' -e '/^$/d' -e 's/<[^>]*>//g' | " \
+                     f"awk '!seen[$0]++' > '{transcript_path}'"
+        try:
+            subprocess.run(filter_cmd, shell=True, check=True)
+            print("transcript.txt 생성 완료!")
+        except subprocess.CalledProcessError as e:
+            print("transcript.txt 생성 중 오류 발생:", e)
+    else:
+        print(f"{vtt_path} 파일이 존재하지 않아 transcript.txt를 생성하지 못함.")
 
     return f"유튜브영상 ID: {video_id}", 200
 
