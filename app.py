@@ -1,6 +1,8 @@
 import re
 from flask import Flask, request
 import requests
+import os
+import subprocess
 
 app = Flask(__name__)
 
@@ -76,7 +78,28 @@ def video():
     print(f"받은 영상URL: {video_url}")
     video_id = extract_youtube_id(video_url)
     print(f"추출된 영상ID: {video_id}")
+
     send_notion_request(video_id)
+
+    # 1. yt 폴더가 없으면 생성
+    os.makedirs('yt', exist_ok=True)
+
+    # 2. yt-dlp 명령어 실행 (yt 폴더 경로를 명시적으로 지정)
+    youtube_url = f"https://youtu.be/{video_id}"
+    cmd = [
+        "yt-dlp",
+        "-o", "yt/download_script.%(ext)s",
+        "--write-auto-sub",
+        "--sub-lang", "ko",
+        "--skip-download",
+        youtube_url
+    ]
+    try:
+        subprocess.run(cmd, check=True)
+        print("자막 다운로드 완료!")
+    except subprocess.CalledProcessError as e:
+        print("yt-dlp 실행 중 오류 발생:", e)
+
     return f"유튜브영상 ID: {video_id}", 200
 
 if __name__ == '__main__':
