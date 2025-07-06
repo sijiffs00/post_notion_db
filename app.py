@@ -1,5 +1,5 @@
 import re
-from flask import Flask, request
+from flask import Flask, request, Response
 import requests
 import os
 import subprocess
@@ -142,7 +142,7 @@ def video():
     else:
         print(f"{vtt_path} 파일이 존재하지 않아 transcript.txt를 생성하지 못함.")
 
-    return f"유튜브영상 ID: {video_id}", 200
+    return Response(f"유튜브영상 ID: {video_id}", status=200, mimetype='text/plain')
 
 if __name__ == '__main__':
     print('서버 ON🔆')
