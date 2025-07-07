@@ -66,8 +66,7 @@ def send_notion_request(video_id):
         }
     }
     response = requests.post(url, headers=headers, json=data)
-    print(f"Notion API 응답 코드: {response.status_code}")
-    print(f"응답 내용: {response.text}")
+    # Notion 응답은 로그로 남기지 않음
 
 def request_gemini_summary(transcript_path):
     with open(transcript_path, 'r', encoding='utf-8') as f:
@@ -87,9 +86,7 @@ def request_gemini_summary(transcript_path):
         ]
     }
     response = requests.post(api_url, headers=headers, data=json.dumps(data))
-    print("Gemini 응답 코드:", response.status_code)
-    print("Gemini 응답 내용:", response.text)
-    return response.text
+    return response.status_code
 
 @app.route('/')
 def home():
@@ -97,10 +94,10 @@ def home():
 
 @app.route('/video', methods=['POST'])
 def video():
+    print("\n✨ post 요청 들어옴.")
     video_url = request.get_data(as_text=True)
-    print(f"받은 영상URL: {video_url}")
     video_id = extract_youtube_id(video_url)
-    print(f"추출된 영상ID: {video_id}")
+    print(f"1️⃣ 영상ID : {video_id}")
 
     send_notion_request(video_id)
 
@@ -119,28 +116,33 @@ def video():
         "--skip-download",
         youtube_url
     ]
+    vtt_result = "실패"
     try:
         subprocess.run(cmd, check=True)
-        print("자막 다운로드 완료!")
-    except subprocess.CalledProcessError as e:
-        print("yt-dlp 실행 중 오류 발생:", e)
+        if os.path.exists(vtt_path):
+            vtt_result = "성공"
+    except subprocess.CalledProcessError:
+        vtt_result = "실패"
+    print(f"2️⃣ yt/download_script.ko.vtt 파일 생성 : {vtt_result}")
 
     # 3. iconv/sed/awk 명령어로 transcript.txt 생성
-    if os.path.exists(vtt_path):
+    transcript_result = "실패"
+    if vtt_result == "성공":
         filter_cmd = f"iconv -f utf-8 -t utf-8 '{vtt_path}' | " \
                      f"LC_CTYPE=UTF-8 sed -e '/^[0-9]/d' -e '/^$/d' -e 's/<[^>]*>//g' | " \
                      f"awk '!seen[$0]++' > '{transcript_path}'"
         try:
             subprocess.run(filter_cmd, shell=True, check=True)
-            print("transcript.txt 생성 완료!")
-        except subprocess.CalledProcessError as e:
-            print("transcript.txt 생성 중 오류 발생:", e)
-        # 4. Gemini API 요청
-        if os.path.exists(transcript_path):
-            gemini_response = request_gemini_summary(transcript_path)
-            # 필요하면 gemini_response를 파일로 저장하거나, Notion에 추가 등 추가 가능
-    else:
-        print(f"{vtt_path} 파일이 존재하지 않아 transcript.txt를 생성하지 못함.")
+            if os.path.exists(transcript_path):
+                transcript_result = "성공"
+        except subprocess.CalledProcessError:
+            transcript_result = "실패"
+    print(f"3️⃣ yt/transcript.txt 파일 생성 : {transcript_result}")
+
+    gemini_code = "-"
+    if transcript_result == "성공":
+        gemini_code = request_gemini_summary(transcript_path)
+    print(f"4️⃣ Gemini 2.5 Pro 요청결과 : {gemini_code}")
 
     return Response(f"유튜브영상 ID: {video_id}", status=200, mimetype='text/plain')
 
