@@ -66,7 +66,7 @@ def send_notion_request(video_id):
         }
     }
     response = requests.post(url, headers=headers, json=data)
-    # Notion 응답은 로그로 남기지 않음
+    return response.status_code
 
 def request_gemini_summary(transcript_path):
     with open(transcript_path, 'r', encoding='utf-8') as f:
@@ -86,7 +86,7 @@ def request_gemini_summary(transcript_path):
         ]
     }
     response = requests.post(api_url, headers=headers, data=json.dumps(data))
-    return response.status_code
+    return response.status_code, response.text
 
 @app.route('/')
 def home():
@@ -99,12 +99,8 @@ def video():
     video_id = extract_youtube_id(video_url)
     print(f"1️⃣ 영상ID : {video_id}")
 
-    send_notion_request(video_id)
-
-    # 1. yt 폴더가 없으면 생성
     os.makedirs('yt', exist_ok=True)
 
-    # 2. yt-dlp 명령어 실행 (yt 폴더 경로를 명시적으로 지정)
     youtube_url = f"https://youtu.be/{video_id}"
     vtt_path = os.path.join('yt', 'download_script.ko.vtt')
     transcript_path = os.path.join('yt', 'transcript.txt')
@@ -125,7 +121,6 @@ def video():
         vtt_result = "실패"
     print(f"2️⃣ yt/download_script.ko.vtt 파일 생성 : {vtt_result}")
 
-    # 3. iconv/sed/awk 명령어로 transcript.txt 생성
     transcript_result = "실패"
     if vtt_result == "성공":
         filter_cmd = f"iconv -f utf-8 -t utf-8 '{vtt_path}' | " \
@@ -141,8 +136,11 @@ def video():
 
     gemini_code = "-"
     if transcript_result == "성공":
-        gemini_code = request_gemini_summary(transcript_path)
+        gemini_code, _ = request_gemini_summary(transcript_path)
     print(f"4️⃣ Gemini 2.5 Pro 요청결과 : {gemini_code}")
+
+    notion_code = send_notion_request(video_id)
+    print(f"5️⃣ 노션 POST 요청 : {notion_code}")
 
     return Response(f"유튜브영상 ID: {video_id}", status=200, mimetype='text/plain')
 
