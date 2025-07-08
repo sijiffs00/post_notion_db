@@ -4,6 +4,9 @@ import requests
 import os
 import subprocess
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -24,7 +27,7 @@ def extract_youtube_id(url):
 def send_notion_request(video_id):
     url = "https://api.notion.com/v1/pages"
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": f"Bearer {os.environ.get('NOTION_API_KEY')}",
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json"
     }
@@ -71,7 +74,8 @@ def send_notion_request(video_id):
 def request_gemini_summary(transcript_path):
     with open(transcript_path, 'r', encoding='utf-8') as f:
         transcript = f.read()
-    api_url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=AIzaSyB6R2m7pr9jATCoY7-BoY67aOkmqZVGE5U"
+    api_key = os.environ.get('GEMINI_API_KEY')
+    api_url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     prompt = f"다음은 유튜브 영상의 자막이야. 3줄요약과 서론,본론,결말 을 작성해. 마지막에는 핵심내용을 서술해.:\n{transcript}"
     data = {
