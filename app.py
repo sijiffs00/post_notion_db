@@ -94,7 +94,7 @@ def request_gemini_summary(transcript_path):
 
 @app.route('/')
 def home():
-    return '서버 잘 돌아가고 있다!'
+    return 'post_notion_db 프로젝트'
 
 @app.route('/video', methods=['POST'])
 def video():
