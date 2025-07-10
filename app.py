@@ -5,6 +5,7 @@ import os
 import subprocess
 import json
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -31,6 +32,7 @@ def send_notion_request(video_id):
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json"
     }
+    today = datetime.now().date().isoformat()
     data = {
         "parent": { "database_id": "22842d112a7880ec8e73f18afb04f27a" },
         "properties": {
@@ -38,16 +40,16 @@ def send_notion_request(video_id):
                 "title": [
                     {
                         "text": {
-                            "content": "7월 6일 영상 요약"
+                            "content": "영상제목"
                         }
                     }
                 ]
             },
-            "영상URL": {
+            "한줄요약": {
                 "rich_text": [
                     {
                         "text": {
-                            "content": video_id
+                            "content": "이곳에 한줄요약 텍스트"
                         }
                     }
                 ]
@@ -56,14 +58,14 @@ def send_notion_request(video_id):
                 "rich_text": [
                     {
                         "text": {
-                            "content": "이 영상은 Claude가 자동으로 요약한 결과입니다."
+                            "content": "이곳에 전체 요약 내용"
                         }
                     }
                 ]
             },
             "생성일": {
                 "date": {
-                    "start": "2025-07-06"
+                    "start": today
                 }
             }
         }
