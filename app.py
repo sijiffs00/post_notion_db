@@ -114,14 +114,14 @@ def video():
     print("\n✨ post 요청 들어옴.")
     video_url = request.get_data(as_text=True)
     video_id = extract_youtube_id(video_url)
-    print(f"1️⃣ 영상ID : {video_id}")
+    # print(f"1️⃣ 영상ID : {video_id}")  # 영상ID 로그 제거
 
     os.makedirs('yt', exist_ok=True)
 
     youtube_url = f"https://youtu.be/{video_id}"
     # 영상 제목 추출
     video_title = get_youtube_title(youtube_url)
-    print(f"🎬 영상 제목: {video_title}")
+    print(f"1️⃣ 영상 제목: {video_title}")
 
     vtt_path = os.path.join('yt', 'download_script.ko.vtt')
     transcript_path = os.path.join('yt', 'transcript.txt')
@@ -164,7 +164,7 @@ def video():
     print(f"5️⃣ 노션 POST 요청 : {notion_code}")
 
     # 영상 제목을 response로 반환
-    return Response(f"유튜브영상 ID: {video_id}\n제목: {video_title}", status=200, mimetype='text/plain')
+    return Response(video_title, status=200, mimetype='text/plain')
 
 if __name__ == '__main__':
     print('서버 ON🔆')
