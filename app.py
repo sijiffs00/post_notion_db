@@ -25,7 +25,7 @@ def extract_youtube_id(url):
             return match.group(1)
     return None
 
-def send_notion_request(video_id):
+def send_notion_request(video_id, video_title):
     url = "https://api.notion.com/v1/pages"
     headers = {
         "Authorization": f"Bearer {os.environ.get('NOTION_API_KEY')}",
@@ -40,7 +40,7 @@ def send_notion_request(video_id):
                 "title": [
                     {
                         "text": {
-                            "content": "영상제목"
+                            "content": video_title
                         }
                     }
                 ]
@@ -160,7 +160,7 @@ def video():
         gemini_code, _ = request_gemini_summary(transcript_path)
     print(f"4️⃣ Gemini 2.5 Pro 요청결과 : {gemini_code}")
 
-    notion_code = send_notion_request(video_id)
+    notion_code = send_notion_request(video_id, video_title)
     print(f"5️⃣ 노션 POST 요청 : {notion_code}")
 
     # 영상 제목을 response로 반환
