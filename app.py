@@ -94,6 +94,17 @@ def request_gemini_summary(transcript_path):
     response = requests.post(api_url, headers=headers, data=json.dumps(data))
     return response.status_code, response.text
 
+def get_youtube_title(video_url):
+    try:
+        result = subprocess.run(
+            ["yt-dlp", "--get-title", video_url],
+            capture_output=True, text=True, check=True
+        )
+        title = result.stdout.strip()
+        return title
+    except subprocess.CalledProcessError:
+        return None
+
 @app.route('/')
 def home():
     return 'post_notion_db 프로젝트'
@@ -108,6 +119,10 @@ def video():
     os.makedirs('yt', exist_ok=True)
 
     youtube_url = f"https://youtu.be/{video_id}"
+    # 영상 제목 추출
+    video_title = get_youtube_title(youtube_url)
+    print(f"🎬 영상 제목: {video_title}")
+
     vtt_path = os.path.join('yt', 'download_script.ko.vtt')
     transcript_path = os.path.join('yt', 'transcript.txt')
     cmd = [
@@ -148,7 +163,8 @@ def video():
     notion_code = send_notion_request(video_id)
     print(f"5️⃣ 노션 POST 요청 : {notion_code}")
 
-    return Response(f"유튜브영상 ID: {video_id}", status=200, mimetype='text/plain')
+    # 영상 제목을 response로 반환
+    return Response(f"유튜브영상 ID: {video_id}\n제목: {video_title}", status=200, mimetype='text/plain')
 
 if __name__ == '__main__':
     print('서버 ON🔆')
