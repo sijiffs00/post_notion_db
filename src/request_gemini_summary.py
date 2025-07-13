@@ -27,13 +27,14 @@ def request_gemini_summary(text: str, api_key: Optional[str] = None, model: str 
     headers = {
         "Content-Type": "application/json"
     }
-    # Gemini API에 맞는 요청 데이터 포맷
+    # Gemini API에 맞는 요청 데이터 포맷 (프롬프트 추가)
+    prompt = f"이건 대화 내용을 녹음한 스크립트야. 이 대화의 요지를 파악하고 요약해줘:\n\n{text}"
     data = {
         "contents": [
             {
                 "role": "user",
                 "parts": [
-                    {"text": text}
+                    {"text": prompt}
                 ]
             }
         ]
