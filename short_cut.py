@@ -8,14 +8,9 @@ app = Flask(__name__)
 def hello_world():
     data = request.get_json(force=True, silent=True)
     url = data.get('url', '') if data else ''
-    print(f"받은 url: {url}")
+    print(f"받은 url: {url}")  # 유튜브 url 로그 출력
 
-    # url이 있으면 get_youtube_script 함수 호출
-    if url:
-        script = get_youtube_script(url)
-    else:
-        script = ''
-    return script
+    return 'Hello World'
 
     
 
