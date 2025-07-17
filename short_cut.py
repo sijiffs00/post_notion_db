@@ -6,8 +6,15 @@ app = Flask(__name__)
 # POST 요청을 처리하는 엔드포인트 생성
 @app.route('/', methods=['POST'])
 def hello_world():
-    # 요청이 들어오면 그냥 텍스트로 'Hello World'를 body에 담아 응답
+    # 요청 body에서 JSON 데이터 추출
+    data = request.get_json()
+    url = data.get('url') if data else None
+    # 받은 url을 로그로 출력
+    print(f"받은 URL: {url}")
+    # 텍스트로 'Hello World' 응답
     return 'Hello World'
+
+    
 
 # 서버를 0.0.0.0:5000에서 실행 (외부 접속 허용)
 # debug=False로 설정해서 프로덕션 환경처럼 동작하게 함
