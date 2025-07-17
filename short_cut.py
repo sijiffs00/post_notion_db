@@ -6,12 +6,14 @@ app = Flask(__name__)
 # POST 요청을 처리하는 엔드포인트 생성
 @app.route('/', methods=['POST'])
 def hello_world():
-    # 요청 body에서 JSON 데이터 추출
-    data = request.get_json()
-    url = data.get('url') if data else None
-    # 받은 url을 로그로 출력
-    print(f"받은 URL: {url}")
-    # 텍스트로 'Hello World' 응답
+    print("요청 body:", request.data)
+    try:
+        data = request.get_json()
+        print("파싱된 JSON:", data)
+        url = data.get('url') if data else None
+        print(f"받은 URL: {url}")
+    except Exception as e:
+        print("에러 발생:", e)
     return 'Hello World'
 
     
