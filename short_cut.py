@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from urllib.parse import urlparse, parse_qs
 
 # Flask 애플리케이션 인스턴스 생성
 app = Flask(__name__)
@@ -8,9 +9,12 @@ app = Flask(__name__)
 def hello_world():
     data = request.get_json(force=True, silent=True)
     url = data.get('url', '') if data else ''
-    print(f"받은 url: {url}")  # 유튜브 url 로그 출력
+    print(f"받은 url: {url}") 
 
-    return 'Hello World'
+    video_id = extract_video_id(url)
+
+    return video_id 
+
 
     
 
