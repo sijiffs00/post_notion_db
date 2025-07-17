@@ -6,13 +6,16 @@ app = Flask(__name__)
 # POST 요청을 처리하는 엔드포인트 생성
 @app.route('/', methods=['POST'])
 def hello_world():
-    # 요청 body에서 JSON 데이터 추출
     data = request.get_json(force=True, silent=True)
-    # data가 None이거나 'url' 키가 없을 경우를 대비해서 기본값 '' 사용
     url = data.get('url', '') if data else ''
-    # url 값을 로그로 출력
     print(f"받은 url: {url}")
-    return 'Hello World'
+
+    # url이 있으면 get_youtube_script 함수 호출
+    if url:
+        script = get_youtube_script(url)
+    else:
+        script = ''
+    return script
 
     
 
