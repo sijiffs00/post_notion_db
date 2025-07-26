@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # YouTube URL에서 video ID를 추출하는 엔드포인트
 @app.route('/', methods=['POST'])
-def extract_youtube_video_id():
+def handle_youtube_url_request():
     try:
         data = request.get_json(force=True, silent=True)
         url = data.get('url', '') if data else ''
