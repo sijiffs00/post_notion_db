@@ -109,8 +109,9 @@ def transfer_script(video_id: str) -> dict:
                     with open(txt_file_path, 'w', encoding='utf-8') as f:
                         f.write(cleaned_text)
                     
-                    # 원본 자막 파일 삭제
-                    subtitle_file.unlink()
+                    # 모든 VTT 파일 삭제
+                    for vtt_file in subtitle_files:
+                        vtt_file.unlink()
                     
                     return {
                         'success': True,
