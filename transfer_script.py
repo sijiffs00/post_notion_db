@@ -67,34 +67,27 @@ def extract_script_with_transcript_api(video_id: str, scripts_dir: Path) -> dict
         dict: 결과 딕셔너리
     """
     try:
-        # 한국어 자막 우선, 없으면 영어, 없으면 자동 생성 자막
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        # YouTubeTranscriptApi 인스턴스 생성
+        ytt_api = YouTubeTranscriptApi()
         
-        # 한국어 자막 찾기
-        transcript = None
-        for t in transcript_list:
-            if t.language_code == 'ko':
-                transcript = t
-                break
-        
-        # 한국어가 없으면 영어 찾기
-        if not transcript:
-            for t in transcript_list:
-                if t.language_code == 'en':
-                    transcript = t
-                    break
-        
-        # 영어도 없으면 첫 번째 자막 사용
-        if not transcript:
-            transcript = transcript_list[0]
-        
-        # 자막 가져오기
-        transcript_data = transcript.fetch()
+        # 한국어 자막 우선 시도
+        try:
+            transcript_data = ytt_api.fetch(video_id, languages=['ko'])
+            print("한국어 자막 사용")
+        except:
+            # 한국어가 없으면 영어 시도
+            try:
+                transcript_data = ytt_api.fetch(video_id, languages=['en'])
+                print("영어 자막 사용")
+            except:
+                # 영어도 없으면 자동 생성 자막 시도
+                transcript_data = ytt_api.fetch(video_id)
+                print("자동 생성 자막 사용")
         
         # 텍스트 추출
         text_lines = []
         for item in transcript_data:
-            text_lines.append(item['text'])
+            text_lines.append(item.text)
         
         # 텍스트 합치기
         full_text = '\n'.join(text_lines)
@@ -221,6 +214,7 @@ def transfer_script(video_id: str) -> dict:
                 
     except yt_dlp.utils.DownloadError as e:
         error_msg = str(e)
+        print(f"yt-dlp 오류: {error_msg}")
         if "Sign in to confirm you're not a bot" in error_msg:
             # yt-dlp가 봇 감지로 실패하면 youtube-transcript-api 시도
             if YOUTUBE_TRANSCRIPT_AVAILABLE:
