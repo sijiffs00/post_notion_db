@@ -215,15 +215,18 @@ def transfer_script(video_id: str) -> dict:
     except yt_dlp.utils.DownloadError as e:
         error_msg = str(e)
         print(f"yt-dlp 오류: {error_msg}")
-        if "Sign in to confirm you're not a bot" in error_msg:
-            # yt-dlp가 봇 감지로 실패하면 youtube-transcript-api 시도
+        if "Sign in to confirm you're not a bot" in error_msg or "HTTP Error 429" in error_msg:
+            # yt-dlp가 봇 감지나 요청 제한으로 실패하면 youtube-transcript-api 시도
             if YOUTUBE_TRANSCRIPT_AVAILABLE:
                 print("yt-dlp 실패, youtube-transcript-api로 재시도...")
+                # scripts_dir이 정의되지 않았을 수 있으므로 다시 생성
+                scripts_dir = Path("scripts")
+                scripts_dir.mkdir(exist_ok=True)
                 return extract_script_with_transcript_api(video_id, scripts_dir)
             else:
                 return {
                     'success': False,
-                    'error': 'YouTube에서 봇 감지로 인한 접근 제한. 잠시 후 다시 시도해주세요.'
+                    'error': 'YouTube에서 접근 제한. 잠시 후 다시 시도해주세요.'
                 }
         else:
             return {
