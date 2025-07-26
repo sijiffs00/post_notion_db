@@ -1,34 +1,12 @@
 from flask import Flask, request, jsonify
-from urllib.parse import urlparse, parse_qs
-import re
+from src.extract_youtube_video_id import extract_video_id
 
 # Flask 애플리케이션 인스턴스 생성
 app = Flask(__name__)
 
-def extract_video_id(url):
-    """
-    YouTube URL에서 video ID를 추출하는 함수
-    """
-    try:
-        # YouTube URL 패턴들
-        patterns = [
-            r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)',
-            r'youtube\.com\/watch\?.*v=([^&\n?#]+)'
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, url)
-            if match:
-                return match.group(1)
-        
-        return None
-    except Exception as e:
-        print(f"Video ID 추출 중 에러: {e}")
-        return None
-
-# POST 요청을 처리하는 엔드포인트 생성
+# YouTube URL에서 video ID를 추출하는 엔드포인트
 @app.route('/', methods=['POST'])
-def hello_world():
+def extract_youtube_video_id():
     try:
         data = request.get_json(force=True, silent=True)
         url = data.get('url', '') if data else ''
