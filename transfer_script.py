@@ -96,7 +96,7 @@ def transfer_script(video_id: str) -> dict:
                 if subtitle_files:
                     # 첫 번째 자막 파일을 txt로 변환
                     subtitle_file = subtitle_files[0]
-                    txt_file_path = scripts_dir / f"{video_id}.txt"
+                    txt_file_path = scripts_dir / "video_script.txt"
                     
                     # 자막 파일을 읽고 정리
                     with open(subtitle_file, 'r', encoding='utf-8') as f:
