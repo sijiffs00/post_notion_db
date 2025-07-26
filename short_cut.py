@@ -1,22 +1,52 @@
 from flask import Flask, request, jsonify
 from urllib.parse import urlparse, parse_qs
+import re
 
 # Flask 애플리케이션 인스턴스 생성
 app = Flask(__name__)
 
+def extract_video_id(url):
+    """
+    YouTube URL에서 video ID를 추출하는 함수
+    """
+    try:
+        # YouTube URL 패턴들
+        patterns = [
+            r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)',
+            r'youtube\.com\/watch\?.*v=([^&\n?#]+)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        
+        return None
+    except Exception as e:
+        print(f"Video ID 추출 중 에러: {e}")
+        return None
+
 # POST 요청을 처리하는 엔드포인트 생성
 @app.route('/', methods=['POST'])
 def hello_world():
-    data = request.get_json(force=True, silent=True)
-    url = data.get('url', '') if data else ''
-    print(f"받은 url: {url}") 
+    try:
+        data = request.get_json(force=True, silent=True)
+        url = data.get('url', '') if data else ''
+        print(f"받은 url: {url}") 
 
-    video_id = extract_video_id(url)
+        if not url:
+            return jsonify({'error': 'URL이 제공되지 않았습니다'}), 400
 
-    return video_id 
+        video_id = extract_video_id(url)
+        
+        if video_id:
+            return jsonify({'video_id': video_id, 'success': True})
+        else:
+            return jsonify({'error': '유효한 YouTube URL이 아닙니다', 'success': False}), 400
 
-
-    
+    except Exception as e:
+        print(f"서버 에러: {e}")
+        return jsonify({'error': '서버 내부 에러가 발생했습니다', 'success': False}), 500
 
 # 서버를 0.0.0.0:5000에서 실행 (외부 접속 허용)
 # debug=False로 설정해서 프로덕션 환경처럼 동작하게 함
