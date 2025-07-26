@@ -4,7 +4,7 @@ from src.extract_youtube_video_id import extract_video_id
 # Flask 애플리케이션 인스턴스 생성
 app = Flask(__name__)
 
-# YouTube URL에서 video ID를 추출하는 엔드포인트
+# 단축어 '영상url을 서버에 post요청' 실행시 여기를 탐.
 @app.route('/', methods=['POST'])
 def handle_youtube_url_request():
     try:

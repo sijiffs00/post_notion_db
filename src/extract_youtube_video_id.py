@@ -1,24 +1,7 @@
-"""
-YouTube URL에서 Video ID를 추출하는 모듈
-
-이 모듈은 다양한 형태의 YouTube URL에서 video ID를 추출하는 기능을 제공합니다.
-YouTube의 여러 URL 형식을 지원하며, 정규표현식을 사용하여 안전하게 ID를 추출합니다.
-
-지원하는 URL 형식:
-- https://www.youtube.com/watch?v=VIDEO_ID
-- https://youtu.be/VIDEO_ID  
-- https://www.youtube.com/embed/VIDEO_ID
-- https://www.youtube.com/watch?param=value&v=VIDEO_ID&other=value
-
-사용 예시:
-    video_id = extract_video_id("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-    # 결과: "dQw4w9WgXcQ"
-"""
-
 import re
 from typing import Optional
 
-
+# 유튜브영상url을 제공하면 영상id값만 추출해서 뱉음
 def extract_video_id(url: str) -> Optional[str]:
 
     try:
