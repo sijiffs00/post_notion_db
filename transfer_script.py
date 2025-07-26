@@ -5,6 +5,13 @@ import os
 import re
 from pathlib import Path
 
+# youtube-transcript-api 대체 방법
+try:
+    from youtube_transcript_api import YouTubeTranscriptApi
+    YOUTUBE_TRANSCRIPT_AVAILABLE = True
+except ImportError:
+    YOUTUBE_TRANSCRIPT_AVAILABLE = False
+
 def clean_vtt_content(vtt_content: str) -> str:
     """
     VTT 파일 내용을 깔끔한 텍스트로 변환
@@ -48,6 +55,67 @@ def clean_vtt_content(vtt_content: str) -> str:
     
     return '\n'.join(cleaned_lines)
 
+def extract_script_with_transcript_api(video_id: str, scripts_dir: Path) -> dict:
+    """
+    youtube-transcript-api를 사용해서 자막 추출
+    
+    Args:
+        video_id (str): 유튜브 영상 ID
+        scripts_dir (Path): 스크립트 저장 디렉토리
+        
+    Returns:
+        dict: 결과 딕셔너리
+    """
+    try:
+        # 한국어 자막 우선, 없으면 영어, 없으면 자동 생성 자막
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        
+        # 한국어 자막 찾기
+        transcript = None
+        for t in transcript_list:
+            if t.language_code == 'ko':
+                transcript = t
+                break
+        
+        # 한국어가 없으면 영어 찾기
+        if not transcript:
+            for t in transcript_list:
+                if t.language_code == 'en':
+                    transcript = t
+                    break
+        
+        # 영어도 없으면 첫 번째 자막 사용
+        if not transcript:
+            transcript = transcript_list[0]
+        
+        # 자막 가져오기
+        transcript_data = transcript.fetch()
+        
+        # 텍스트 추출
+        text_lines = []
+        for item in transcript_data:
+            text_lines.append(item['text'])
+        
+        # 텍스트 합치기
+        full_text = '\n'.join(text_lines)
+        
+        # 파일 저장
+        txt_file_path = scripts_dir / "video_script.txt"
+        with open(txt_file_path, 'w', encoding='utf-8') as f:
+            f.write(full_text)
+        
+        return {
+            'success': True,
+            'file_path': str(txt_file_path),
+            'message': f'스크립트가 성공적으로 저장되었습니다: {txt_file_path} (youtube-transcript-api 사용)'
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f'youtube-transcript-api 오류: {str(e)}'
+        }
+
 def transfer_script(video_id: str) -> dict:
     """
     유튜브 영상 ID로 스크립트를 추출하여 scripts 폴더에 .txt 파일로 저장
@@ -89,7 +157,18 @@ def transfer_script(video_id: str) -> dict:
             'nocheckcertificate': True,
             'ignoreerrors': False,
             'no_warnings': False,
-            'quiet': False
+            'quiet': False,
+            'sleep_interval': 3,  # 요청 간 3초 대기
+            'max_sleep_interval': 10,  # 최대 10초 대기
+            'retries': 3,  # 재시도 횟수
+            'fragment_retries': 3,
+            'extractor_retries': 3,
+            'file_access_retries': 3,
+            'extractor_args': {
+                'youtube': {
+                    'skip': ['dash', 'live'],  # DASH와 라이브 스트림 건너뛰기
+                }
+            }
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -107,7 +186,6 @@ def transfer_script(video_id: str) -> dict:
                 if subtitle_files:
                     # 첫 번째 자막 파일을 txt로 변환
                     subtitle_file = subtitle_files[0]
-                    txt_file_path = scripts_dir / "video_script.txt"
                     
                     # 자막 파일을 읽고 정리
                     with open(subtitle_file, 'r', encoding='utf-8') as f:
@@ -117,6 +195,7 @@ def transfer_script(video_id: str) -> dict:
                     cleaned_text = clean_vtt_content(subtitle_content)
                     
                     # txt 파일로 저장
+                    txt_file_path = scripts_dir / "video_script.txt"
                     with open(txt_file_path, 'w', encoding='utf-8') as f:
                         f.write(cleaned_text)
                     
@@ -143,10 +222,15 @@ def transfer_script(video_id: str) -> dict:
     except yt_dlp.utils.DownloadError as e:
         error_msg = str(e)
         if "Sign in to confirm you're not a bot" in error_msg:
-            return {
-                'success': False,
-                'error': 'YouTube에서 봇 감지로 인한 접근 제한. 잠시 후 다시 시도해주세요.'
-            }
+            # yt-dlp가 봇 감지로 실패하면 youtube-transcript-api 시도
+            if YOUTUBE_TRANSCRIPT_AVAILABLE:
+                print("yt-dlp 실패, youtube-transcript-api로 재시도...")
+                return extract_script_with_transcript_api(video_id, scripts_dir)
+            else:
+                return {
+                    'success': False,
+                    'error': 'YouTube에서 봇 감지로 인한 접근 제한. 잠시 후 다시 시도해주세요.'
+                }
         else:
             return {
                 'success': False,
