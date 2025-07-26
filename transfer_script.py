@@ -1,6 +1,4 @@
-# 스크립트를 뽑을 유튜브영상 id : kDTEvpm5C9Q
-# yt-dlp 라이브러리를 사용해서 스크립트를 뽑음.
-# 스크립트는 .txt파일로 scripts폴더에 저장
+# 유튜브영상id를 제공하면 스크립트를 뽑아서 scripts폴더에 저장
 
 import yt_dlp
 import os

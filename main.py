@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from src.extract_youtube_video_id import extract_video_id
+from transfer_script import transfer_script
 
 # Flask 애플리케이션 인스턴스 생성
 app = Flask(__name__)
@@ -18,7 +19,22 @@ def handle_youtube_url_request():
         video_id = extract_video_id(url)
         
         if video_id:
-            return jsonify({'video_id': video_id, 'success': True})
+            # transfer_script 함수로 스크립트 추출
+            script_result = transfer_script(video_id)
+            
+            if script_result['success']:
+                return jsonify({
+                    'video_id': video_id, 
+                    'success': True,
+                    'script_file': script_result['file_path'],
+                    'message': script_result['message']
+                })
+            else:
+                return jsonify({
+                    'video_id': video_id,
+                    'success': False,
+                    'error': script_result['error']
+                }), 400
         else:
             return jsonify({'error': '유효한 YouTube URL이 아닙니다', 'success': False}), 400
 
