@@ -77,6 +77,19 @@ def transfer_script(video_id: str) -> dict:
             'subtitleslangs': ['ko', 'en'], # 한국어, 영어 자막 우선
             'skip_download': True,         # 영상 다운로드 안함
             'outtmpl': str(scripts_dir / f'{video_id}.%(ext)s'),  # 출력 파일명
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+                'Accept-Encoding': 'gzip,deflate',
+                'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+                'Connection': 'keep-alive',
+            },
+            'nocheckcertificate': True,
+            'ignoreerrors': False,
+            'no_warnings': False,
+            'quiet': False
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -128,10 +141,17 @@ def transfer_script(video_id: str) -> dict:
                 }
                 
     except yt_dlp.utils.DownloadError as e:
-        return {
-            'success': False,
-            'error': f'다운로드 오류: {str(e)}'
-        }
+        error_msg = str(e)
+        if "Sign in to confirm you're not a bot" in error_msg:
+            return {
+                'success': False,
+                'error': 'YouTube에서 봇 감지로 인한 접근 제한. 잠시 후 다시 시도해주세요.'
+            }
+        else:
+            return {
+                'success': False,
+                'error': f'다운로드 오류: {error_msg}'
+            }
     except Exception as e:
         return {
             'success': False,
